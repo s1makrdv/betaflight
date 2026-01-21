@@ -104,6 +104,7 @@ COMMON_SRC = \
             drivers/io_preinit.c \
             drivers/light_led.c \
             drivers/motor.c \
+            drivers/power/ina226.c \
             drivers/pinio.c \
             drivers/pin_pull_up_down.c \
             drivers/pwm_output.c \
