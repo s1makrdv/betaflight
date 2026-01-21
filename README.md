@@ -73,6 +73,10 @@ Betaflight has the following features:
 * VTX support for Unify Pro and IRC Tramp
 * and MUCH, MUCH more.
 
+## ESC telemetry voltage scaling
+
+Some ESCs report telemetry voltage that has already been divided by onboard hardware. If you use ESC telemetry for VBAT, you can scale the reported voltage to match the real battery voltage. Measure VBAT with a multimeter, compare it to the ESC telemetry voltage in Betaflight, and set the scale to `real / reported`. For example, if the ESC telemetry reports 16V and the battery is 32V, set `esc_sensor_voltage_multiplier = 2` and `esc_sensor_voltage_divider = 1`. The defaults keep existing behavior (`1/1`). 
+
 
 ## Installation & Documentation
 

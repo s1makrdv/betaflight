@@ -1788,6 +1788,8 @@ const clivalue_t valueTable[] = {
 #ifdef USE_ESC_SENSOR
     { "esc_sensor_halfduplex",          VAR_UINT8   | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_ESC_SENSOR_CONFIG, offsetof(escSensorConfig_t, halfDuplex) },
     { "esc_sensor_current_offset",      VAR_UINT16  | MASTER_VALUE, .config.minmaxUnsigned = { 0, 16000 }, PG_ESC_SENSOR_CONFIG, offsetof(escSensorConfig_t, offset) },
+    { "esc_sensor_voltage_multiplier", VAR_UINT16  | MASTER_VALUE, .config.minmaxUnsigned = { ESC_SENSOR_VOLTAGE_MULTIPLIER_MIN, ESC_SENSOR_VOLTAGE_MULTIPLIER_MAX }, PG_ESC_SENSOR_CONFIG, offsetof(escSensorConfig_t, voltageMultiplier) },
+    { "esc_sensor_voltage_divider",    VAR_UINT16  | MASTER_VALUE, .config.minmaxUnsigned = { ESC_SENSOR_VOLTAGE_DIVIDER_MIN, ESC_SENSOR_VOLTAGE_DIVIDER_MAX }, PG_ESC_SENSOR_CONFIG, offsetof(escSensorConfig_t, voltageDivider) },
 #endif
 
 #ifdef USE_RX_FRSKY_SPI
