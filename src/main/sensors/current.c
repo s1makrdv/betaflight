@@ -32,6 +32,7 @@
 #include "common/filter.h"
 
 #include "drivers/adc.h"
+#include "drivers/power/ina226.h"
 
 #include "pg/pg.h"
 #include "pg/pg_ids.h"
@@ -43,7 +44,7 @@
 #include "current.h"
 
 const char * const currentMeterSourceNames[CURRENT_METER_COUNT] = {
-    "NONE", "ADC", "VIRTUAL", "ESC", "MSP"
+    "NONE", "ADC", "VIRTUAL", "ESC", "MSP", "INA226"
 };
 
 const uint8_t currentMeterIds[] = {
@@ -291,6 +292,50 @@ void currentMeterMSPRead(currentMeter_t *meter)
 #endif
 
 //
+// INA226
+//
+
+#ifdef USE_INA226
+typedef struct currentMeterINA226State_s {
+    currentMeterMAhDrawnState_t mahDrawnState;
+    int32_t amperage;
+    int32_t amperageLatest;
+    pt1Filter_t filter;
+} currentMeterINA226State_t;
+
+static currentMeterINA226State_t currentMeterINA226State;
+
+void currentMeterINA226Init(void)
+{
+    memset(&currentMeterINA226State, 0, sizeof(currentMeterINA226State_t));
+    pt1FilterInit(&currentMeterINA226State.filter, pt1FilterGain(GET_BATTERY_LPF_FREQUENCY(batteryConfig()->ibatLpfPeriod), HZ_TO_INTERVAL(50)));
+    ina226Init();
+}
+
+void currentMeterINA226Refresh(int32_t lastUpdateAt, timeUs_t currentTimeUs)
+{
+    ina226Update(currentTimeUs);
+
+    int32_t currentCentiAmps = 0;
+    if (ina226GetCurrentCentiAmps(&currentCentiAmps)) {
+        currentMeterINA226State.amperageLatest = currentCentiAmps;
+        currentMeterINA226State.amperage = pt1FilterApply(&currentMeterINA226State.filter, currentCentiAmps);
+        updateCurrentmAhDrawnState(&currentMeterINA226State.mahDrawnState, currentMeterINA226State.amperageLatest, lastUpdateAt);
+    } else {
+        currentMeterINA226State.amperageLatest = 0;
+        currentMeterINA226State.amperage = 0;
+    }
+}
+
+void currentMeterINA226Read(currentMeter_t *meter)
+{
+    meter->amperageLatest = currentMeterINA226State.amperageLatest;
+    meter->amperage = currentMeterINA226State.amperage;
+    meter->mAhDrawn = currentMeterINA226State.mahDrawnState.mAhDrawn;
+}
+#endif
+
+//
 // API for current meters using IDs
 //
 // This API is used by MSP, for configuration/status.
@@ -299,6 +344,11 @@ void currentMeterMSPRead(currentMeter_t *meter)
 void currentMeterRead(currentMeterId_e id, currentMeter_t *meter)
 {
     if (id == CURRENT_METER_ID_BATTERY_1) {
+#ifdef USE_INA226
+        if (batteryConfig()->currentMeterSource == CURRENT_METER_INA226) {
+            currentMeterINA226Read(meter);
+        } else
+#endif
         currentMeterADCRead(meter);
     }
 #ifdef USE_VIRTUAL_CURRENT_METER

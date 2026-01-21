@@ -29,6 +29,7 @@ typedef enum {
     CURRENT_METER_VIRTUAL,
     CURRENT_METER_ESC,
     CURRENT_METER_MSP,
+    CURRENT_METER_INA226,
     CURRENT_METER_COUNT
 } currentMeterSource_e;
 
@@ -135,6 +136,12 @@ void currentMeterMSPInit(void);
 void currentMeterMSPRefresh(timeUs_t currentTimeUs);
 void currentMeterMSPRead(currentMeter_t *meter);
 void currentMeterMSPSet(uint16_t amperage, uint16_t mAhDrawn);
+
+#ifdef USE_INA226
+void currentMeterINA226Init(void);
+void currentMeterINA226Refresh(int32_t lastUpdateAt, timeUs_t currentTimeUs);
+void currentMeterINA226Read(currentMeter_t *meter);
+#endif
 
 //
 // API for reading current meters by id.

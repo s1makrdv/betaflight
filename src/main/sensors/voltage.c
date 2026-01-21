@@ -35,6 +35,7 @@
 #include "config/config_reset.h"
 
 #include "drivers/adc.h"
+#include "drivers/power/ina226.h"
 
 #include "flight/mixer.h"
 #include "flight/pid.h"
@@ -49,7 +50,7 @@
 #include "voltage.h"
 
 const char * const voltageMeterSourceNames[VOLTAGE_METER_COUNT] = {
-    "NONE", "ADC", "ESC"
+    "NONE", "ADC", "ESC", "INA226"
 };
 
 const uint8_t voltageMeterIds[] = {
@@ -307,6 +308,65 @@ void voltageMeterESCReadCombined(voltageMeter_t *voltageMeter)
 }
 
 //
+// INA226
+//
+
+#ifdef USE_INA226
+typedef struct voltageMeterINA226State_s {
+    uint16_t voltageDisplayFiltered;
+    uint16_t voltageUnfiltered;
+    pt1Filter_t displayFilter;
+#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
+    uint16_t voltageSagFiltered;
+    pt1Filter_t sagFilter;
+#endif
+} voltageMeterINA226State_t;
+
+static voltageMeterINA226State_t voltageMeterINA226State;
+
+void voltageMeterINA226Init(void)
+{
+    memset(&voltageMeterINA226State, 0, sizeof(voltageMeterINA226State));
+    pt1FilterInit(&voltageMeterINA226State.displayFilter, pt1FilterGain(GET_BATTERY_LPF_FREQUENCY(batteryConfig()->vbatDisplayLpfPeriod), HZ_TO_INTERVAL(isSagCompensationConfigured() ? FAST_VOLTAGE_TASK_FREQ_HZ : SLOW_VOLTAGE_TASK_FREQ_HZ)));
+#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
+    pt1FilterInit(&voltageMeterINA226State.sagFilter, pt1FilterGain(GET_BATTERY_LPF_FREQUENCY(batteryConfig()->vbatSagLpfPeriod), HZ_TO_INTERVAL(FAST_VOLTAGE_TASK_FREQ_HZ)));
+#endif
+    ina226Init();
+}
+
+void voltageMeterINA226Refresh(timeUs_t currentTimeUs)
+{
+    ina226Update(currentTimeUs);
+
+    uint16_t rawCentiV = 0;
+    if (ina226GetBusVoltageCentiV(&rawCentiV)) {
+        voltageMeterINA226State.voltageUnfiltered = rawCentiV;
+        voltageMeterINA226State.voltageDisplayFiltered = pt1FilterApply(&voltageMeterINA226State.displayFilter, rawCentiV);
+#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
+        if (isSagCompensationConfigured()) {
+            voltageMeterINA226State.voltageSagFiltered = pt1FilterApply(&voltageMeterINA226State.sagFilter, rawCentiV);
+        }
+#endif
+    } else {
+        voltageMeterINA226State.voltageUnfiltered = 0;
+        voltageMeterINA226State.voltageDisplayFiltered = 0;
+#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
+        voltageMeterINA226State.voltageSagFiltered = 0;
+#endif
+    }
+}
+
+void voltageMeterINA226Read(voltageMeter_t *voltageMeter)
+{
+    voltageMeter->displayFiltered = voltageMeterINA226State.voltageDisplayFiltered;
+    voltageMeter->unfiltered = voltageMeterINA226State.voltageUnfiltered;
+#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
+    voltageMeter->sagFiltered = voltageMeterINA226State.voltageSagFiltered;
+#endif
+}
+#endif
+
+//
 // API for using voltage meters using IDs
 //
 // This API is used by MSP, for configuration/status.
@@ -329,6 +389,11 @@ const uint8_t voltageMeterADCtoIDMap[MAX_VOLTAGE_SENSOR_ADC] = {
 void voltageMeterRead(voltageMeterId_e id, voltageMeter_t *meter)
 {
     if (id == VOLTAGE_METER_ID_BATTERY_1) {
+#ifdef USE_INA226
+        if (batteryConfig()->voltageMeterSource == VOLTAGE_METER_INA226) {
+            voltageMeterINA226Read(meter);
+        } else
+#endif
         voltageMeterADCRead(VOLTAGE_SENSOR_ADC_VBAT, meter);
     } else
 #ifdef ADC_POWER_12V

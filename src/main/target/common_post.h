@@ -247,6 +247,9 @@
 #if defined(USE_BARO_MS5611)
 #undef USE_BARO_MS5611
 #endif
+#if defined(USE_INA226)
+#undef USE_INA226
+#endif
 #endif
 
 // Add VARIO if BARO or GPS is defined. Remove when none defined.
@@ -681,4 +684,3 @@ extern struct linker_symbol __config_end;
 #define USE_PIN_PULL_UP_DOWN
 #endif
 #endif // USE_PINIO
-

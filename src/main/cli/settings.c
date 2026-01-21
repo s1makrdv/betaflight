@@ -43,6 +43,7 @@
 #include "drivers/light_led.h"
 #include "drivers/mco.h"
 #include "drivers/pinio.h"
+#include "drivers/power/ina226.h"
 #include "drivers/sdio.h"
 #include "drivers/vtx_common.h"
 #include "drivers/vtx_table.h"
@@ -1013,6 +1014,13 @@ const clivalue_t valueTable[] = {
     { "vbat_hysteresis",            VAR_UINT8  | MASTER_VALUE, .config.minmaxUnsigned = { 0, 250 }, PG_BATTERY_CONFIG, offsetof(batteryConfig_t, vbathysteresis) },
     { "current_meter",              VAR_UINT8  | HARDWARE_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_CURRENT_METER }, PG_BATTERY_CONFIG, offsetof(batteryConfig_t, currentMeterSource) },
     { "battery_meter",              VAR_UINT8  | HARDWARE_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_VOLTAGE_METER }, PG_BATTERY_CONFIG, offsetof(batteryConfig_t, voltageMeterSource) },
+#ifdef USE_INA226
+    { "ina226_i2c_address",         VAR_UINT8  | HARDWARE_VALUE, .config.minmaxUnsigned = { I2C_ADDR7_MIN, I2C_ADDR7_MAX }, PG_INA226_CONFIG, offsetof(ina226Config_t, i2cAddress) },
+    { "ina226_shunt_uohm",          VAR_UINT32 | HARDWARE_VALUE, .config.u32Max = 1000000, PG_INA226_CONFIG, offsetof(ina226Config_t, shuntMicroOhm) },
+    { "ina226_max_current_a",       VAR_UINT16 | HARDWARE_VALUE, .config.minmaxUnsigned = { 0, 1000 }, PG_INA226_CONFIG, offsetof(ina226Config_t, maxCurrentA) },
+    { "ina226_avg_samples",         VAR_UINT16 | HARDWARE_VALUE, .config.minmaxUnsigned = { 1, 1024 }, PG_INA226_CONFIG, offsetof(ina226Config_t, avgSamples) },
+    { "ina226_conv_time_us",        VAR_UINT16 | HARDWARE_VALUE, .config.minmaxUnsigned = { 140, 8244 }, PG_INA226_CONFIG, offsetof(ina226Config_t, convTimeUs) },
+#endif
     { "vbat_detect_cell_voltage",   VAR_UINT16  | MASTER_VALUE, .config.minmaxUnsigned = { 0, 2000 }, PG_BATTERY_CONFIG, offsetof(batteryConfig_t, vbatnotpresentcellvoltage) },
     { "use_vbat_alerts",            VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_BATTERY_CONFIG, offsetof(batteryConfig_t, useVBatAlerts) },
     { "use_cbat_alerts",            VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_BATTERY_CONFIG, offsetof(batteryConfig_t, useConsumptionAlerts) },

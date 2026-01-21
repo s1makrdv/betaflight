@@ -98,6 +98,8 @@
 #define USE_BARO_SPI_LPS22DF
 #endif
 
+#define USE_INA226
+
 #if !defined(USE_GYRO) && !defined(USE_ACC)
 #define USE_ACC
 #define USE_GYRO

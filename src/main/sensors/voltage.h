@@ -40,6 +40,7 @@ typedef enum {
     VOLTAGE_METER_NONE = 0,
     VOLTAGE_METER_ADC,
     VOLTAGE_METER_ESC,
+    VOLTAGE_METER_INA226,
     VOLTAGE_METER_COUNT
 } voltageMeterSource_e;
 
@@ -117,6 +118,12 @@ void voltageMeterESCInit(void);
 void voltageMeterESCRefresh(void);
 void voltageMeterESCReadCombined(voltageMeter_t *voltageMeter);
 void voltageMeterESCReadMotor(uint8_t motor, voltageMeter_t *voltageMeter);
+
+#ifdef USE_INA226
+void voltageMeterINA226Init(void);
+void voltageMeterINA226Refresh(timeUs_t currentTimeUs);
+void voltageMeterINA226Read(voltageMeter_t *voltageMeter);
+#endif
 
 //
 // api for battery stable voltage detection
