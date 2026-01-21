@@ -98,8 +98,6 @@
 #define USE_BARO_SPI_LPS22DF
 #endif
 
-#define USE_INA226
-
 #if !defined(USE_GYRO) && !defined(USE_ACC)
 #define USE_ACC
 #define USE_GYRO
@@ -174,6 +172,10 @@
 #endif
 
 #endif // !defined(USE_CONFIG)
+
+#ifndef USE_INA226
+#define USE_INA226
+#endif
 
 #define USE_RX_PPM
 #define USE_RX_PWM
