@@ -75,7 +75,9 @@ Byte 9: 8-bit CRC
 PG_REGISTER_WITH_RESET_TEMPLATE(escSensorConfig_t, escSensorConfig, PG_ESC_SENSOR_CONFIG, 0);
 
 PG_RESET_TEMPLATE(escSensorConfig_t, escSensorConfig,
-        .halfDuplex = 0
+        .halfDuplex = 0,
+        .voltageMultiplier = 1,
+        .voltageDivider = 1
 );
 
 /*
@@ -261,10 +263,15 @@ static uint8_t decodeEscFrame(void)
     if (chksum == tlmsum) {
         escSensorData[escSensorMotor].dataAge = 0;
         escSensorData[escSensorMotor].temperature = telemetryBuffer[0];
-        escSensorData[escSensorMotor].voltage = telemetryBuffer[1] << 8 | telemetryBuffer[2];
+        const uint16_t rawVoltage = telemetryBuffer[1] << 8 | telemetryBuffer[2];
         escSensorData[escSensorMotor].current = telemetryBuffer[3] << 8 | telemetryBuffer[4];
         escSensorData[escSensorMotor].consumption = telemetryBuffer[5] << 8 | telemetryBuffer[6];
         escSensorData[escSensorMotor].rpm = telemetryBuffer[7] << 8 | telemetryBuffer[8];
+        const escSensorConfig_t *config = escSensorConfig();
+        const uint16_t divider = MAX(config->voltageDivider, (uint16_t)1);
+        uint32_t scaledVoltage = (uint32_t)rawVoltage * config->voltageMultiplier;
+        scaledVoltage = (scaledVoltage + divider / 2) / divider;
+        escSensorData[escSensorMotor].voltage = (uint16_t)MIN(scaledVoltage, (uint32_t)UINT16_MAX);
 
         combinedDataNeedsUpdate = true;
 

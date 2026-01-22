@@ -25,6 +25,8 @@
 typedef struct escSensorConfig_s {
     uint8_t halfDuplex;             // Set to false to listen on the TX pin for telemetry data
     uint16_t offset;                // offset consumed by the flight controller / VTX / cam / ... in milliampere
+    uint16_t voltageMultiplier;     // ESC voltage scaling multiplier (applied before divider)
+    uint16_t voltageDivider;        // ESC voltage scaling divider
 
 } escSensorConfig_t;
 
@@ -42,6 +44,12 @@ typedef struct {
 #define ESC_DATA_INVALID 255
 
 #define ESC_BATTERY_AGE_MAX 10
+
+#define ESC_SENSOR_VOLTAGE_MULTIPLIER_MIN 1
+#define ESC_SENSOR_VOLTAGE_MULTIPLIER_MAX 1000
+
+#define ESC_SENSOR_VOLTAGE_DIVIDER_MIN 1
+#define ESC_SENSOR_VOLTAGE_DIVIDER_MAX 1000
 
 bool escSensorInit(void);
 void escSensorProcess(timeUs_t currentTime);
